@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+
+{% block styles %}
+    <link rel="stylesheet" href="{{ '/static/assets/stylesheets/application.451f80e5.css' | url }}">
+    {% if palette.primary or palette.accent %}
+        <link rel="stylesheet" href="{{ '/static/assets/stylesheets/application-palette.22915126.css' | url }}">
+    {% endif %}
+    {% if palette.primary %}
+        {% import "partials/palette.html" as map %}
+        {% set primary = map.primary(
+          palette.primary | replace(" ", "-") | lower
+        ) %}
+        <meta name="theme-color" content="{{ primary }}">
+    {% endif %}
+{% endblock %}
+{% block libs %}
+    <script src="{{ '/static/assets/javascripts/modernizr.1aa3b519.js' | url }}"></script>
+{% endblock %}
+
+{% block fonts %}
+    {% if font != false %}
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family={{ font.text | replace(' ', '+')  + ':300,400,400i,700|' +
+              font.code | replace(' ', '+') }}">
+        <style>body, input {
+            font-family: "{{ font.text }}", "Helvetica Neue", Helvetica, Arial, sans-serif
+        }
+
+        code, kbd, pre {
+            font-family: "{{ font.code }}", "Courier New", Courier, monospace
+        }</style>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ '/static/assets/javascripts/application.627ea402.js' | url }}"></script>
+    {% if lang.t("search.language") != "en" %}
+        {% set languages = lang.t("search.language").split(",") %}
+        {% if languages | length and languages[0] != "" %}
+            {% set path = "/static/assets/javascripts/lunr/" %}
+            <script src="{{ (path ~ 'lunr.stemmer.support.js') | url }}"></script>
+            {% for language in languages | map("trim") %}
+                {% if language != "en" %}
+                    {% if language == "jp" %}
+                        <script src="{{ (path ~ 'tinyseg.js') | url }}"></script>
+                    {% endif %}
+                    {% if language in ("da", "de", "du", "es", "fi", "fr", "hu", "it", "jp", "no", "pt", "ro", "ru", "sv", "tr") %}
+                        <script src="{{ (path ~ 'lunr.' ~ language ~ '.js') | url }}"></script>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            {% if languages | length > 1 %}
+                <script src="{{ (path ~ 'lunr.multi.js') | url }}"></script>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+    <script>app.initialize({version: "{{ mkdocs_version }}", url: {base: "{{ base_url }}"}})</script>
+    {% for path in config["extra_javascript"] %}
+        <script src="{{ path | url }}"></script>
+    {% endfor %}
+{% endblock %}
+
+{% block content %}
+    {% if page.edit_url %}
+        <a href="{{ page.edit_url }}" title="{{ lang.t('edit.link.title') }}"
+           class="md-icon md-content__icon">&#xE3C9;</a>
+    {% endif %}
+    {% if not "\x3ch1" in page.content %}
+        <h1>{{ page.title | default(config.site_name, true) }}</h1>
+    {% endif %}
+    {{ page.content | safe}}
+    {% block source %}
+        {% if page and page.meta and page.meta.source %}
+            <h2 id="__source">{{ lang.t("meta.source") }}</h2>
+            {% set repo = config.repo_url %}
+            {% if repo | last == "/" %}
+                {% set repo = repo[:-1] %}
+            {% endif %}
+            {% set path = page.meta.path | default([""]) %}
+            {% set file = page.meta.source %}
+            <a href="{{ [repo, path, file] | join('/') }}" title="{{ file }}" class="md-source-file">
+                {{ file }}
+            </a>
+        {% endif %}
+    {% endblock %}
+{% endblock %}
